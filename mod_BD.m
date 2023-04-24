@@ -1,0 +1,58 @@
+function [theta_s , theta_c , beta_0] = mod_BD (alpha_R , beta_c , beta_s, flight , geom)
+
+%{
+    DESCRIPTION: 
+        -> This function retrieves the slope of the Cl vs AoA curve at a 
+            given section of the blade. 
+
+    INPUTS: 
+        -> cl_alpha_root: cl_alpha at the root [-] (float)
+        -> cl_alpha_tip: cl_alpha at the tip [-] (float)
+        -> x: non dimentional distance from the root (0<=x<=1) [-] (float)
+    
+    OUTPUTS: 
+        -> cl_alpha: cl_alpha at blade section x [-] (float) 
+%}
+
+%% Recall flight conditions parameters
+rho = flight.rho;
+W = flight.W;
+Omega = flight.Omega;
+V = flight.V;
+
+%% Recall helicopter geometric parameters
+Cl_alpha = geom.Cl_alpha;
+R = geom.R;
+c_0 = geom.c_0;
+I_y = geom.I_y;
+
+%% Compute parameters prior to system resolution
+gamma = rho*Cl_alpha*R^4*c_0/I_y; % Lock number
+
+v_i = sqrt(W/(2*rho*S)); % Induced velocity (estimated from hovering condition with MT)
+
+mu_x = V/(Omega*R)*cos(alpha_R);
+
+lambda = V/(Omega*R)*sin(alpha_R) - v_i/(Omega*R);
+
+
+%% Construct system
+
+A = [-gamma/6*mu_x  0  1 ;...
+    0 -1/8*(mu_x^2 + 2) mu_x/3;...
+    1/8*(2 + 3*mu_x^3) 0 0]; % System matrix
+
+RHS = [gamma*(1/8*(mu_x^2 + 1)*theta_0 + lambda/6);...
+    -beta_s*(1/8*mu_x^2 + 1/4);...
+    beta_c*(1/8*mu_x^2 - 1/4) - theta_0*2/3*mu_x + lambda*mu_x/2]; % RHS of system
+
+%% Solve system
+sol = A\RHS;
+
+%% Retrieve solution
+theta_s = sol(1);
+theta_c = sol(2);
+beta_0 = sol(3);
+
+end
+
