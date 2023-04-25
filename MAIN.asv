@@ -96,8 +96,6 @@ end
 
 
 % %% Reverse flow
-% x=linspace(0, 1, 100);
-% psi_rev=asin(-flight.Omega*x*geom.R/flight.V*cos(alpha_R));
-% 
-% polarplot(psi_rev)
+x=linspace(0, 1, 100);
+psi_rev=asin(-flight.Omega*x*geom.R/flight.V*cos(alpha_R));
 
